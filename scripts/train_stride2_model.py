@@ -21,11 +21,11 @@ from lumin.optimisation.hyper_param import lr_find
 from lumin.plotting.training import plot_train_history
 from lumin.nn.callbacks.monitors import EpochSaver
 from lumin.nn.callbacks.cyclic_callbacks import CycleStep
-from lumin.nn.losses.advanced_losses import WeightedFractionalBinnedHuber
+
 
 sys.path.append('../')
 from muon_regression.nn import Stride2PreActMuonConvTensorHead  # noqa E402
-from muon_regression.nn import DownweightHighEMuons, MaxRMSE, ImprovRMSE  # noqa E402
+from muon_regression.nn import MaxRMSE, ImprovRMSE  # noqa E402
 from muon_regression.experiment import ExpJournal  # noqa E402
 from muon_regression.basics import plot_settings, RESULTS_PATH, ignore_feats, esum_only_feats  # noqa E402
 from muon_regression.plotting import produce_plots , PowerFunc, LinFunc # noqa E402
@@ -78,14 +78,14 @@ def get_model_builder(train_fy:FoldYielder,
     else:
         head = CatEmbHead
         cont_feats = train_fy.cont_feats
-    model_builder = ModelBuilder(objective='regressor',
+    model_builder = ModelBuilder(objective='classification',
                                  cont_feats=cont_feats,
                                  n_out=1,
                                  opt_args={'opt':'adamw', 'eps':1e-08, 'weight_decay':wd} if wd > 0 else {'opt':'adam', 'eps':1e-08},
                                  head=head,
                                  body=partial(FullyConnected, depth=n_fc_layers, width=fc_layer_width, act=act, bn=use_fc_bn, do=do),
                                  tail=partial(ClassRegMulti),
-                                 loss=partial(WeightedFractionalBinnedHuber, bins=torch.linspace(50,8000,6), perc=0.68))
+                                 loss='auto')  # defaults to nn.BCELoss for binary classification
     m = Model(model_builder)
     print("Model configuration", m,'\n')
     if jrn is not None:
@@ -124,8 +124,7 @@ def train_model(model_builder:ModelBuilder,
                 n_models:int=1,
                 excl_idxs:Optional[List[int]]=None,
                 unique_trn_idxs:bool=False) -> Tuple[List[Dict[str,float]],List[Dict[str,List[float]]]]:
-    callback_partials = [DownweightHighEMuons,
-                         partial(CycleStep,
+    callback_partials = [partial(CycleStep,
                                  frac_reduction=0.5,
                                  patience=2,
                                  lengths=(cycle_warmup_len, cycle_decay_len),
