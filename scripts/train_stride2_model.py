@@ -315,7 +315,7 @@ def train(run_name:             str=Argument(...,             help='Run name for
                                      unique_trn_idxs=unique_trn_idxs)
     plot_train_history(histories, 'Full_loss_history', ignore_trn=False, settings=plot_settings, show=False)
     
-    # Evaluation
+    # Evaluation (NOTE: this evaluation was supposed to be for regression of theta vs x, hence it's likely that most of it is nonsense for classification)
     print('\nTraining complete, loading model')
     record_mean_results(results, jrn)
     ensemble = Ensemble.from_results(results, size=n_models if extra_val_data else 1, model_builder=model_builder)
@@ -327,8 +327,8 @@ def train(run_name:             str=Argument(...,             help='Run name for
     print(f'Saving validation dataframe to {results_path}')
     df[[c for c in df.columns if c != 'gen_weight']].to_csv(results_path/'val_df.csv', index=False)
     print(f'\nProducing plots and saving to {plot_settings.savepath.absolute()}')
-    produce_plots(df, jrn, plot_settings, fit_func=PowerFunc(), restrict_range=False)
-    produce_plots(df, jrn, plot_settings, fit_func=LinFunc(),   restrict_range=True)
+    #produce_plots(df, jrn, plot_settings, fit_func=PowerFunc(), restrict_range=False)
+    #produce_plots(df, jrn, plot_settings, fit_func=LinFunc(),   restrict_range=True)
     print('\nModel performance:\n', jrn)
 
     # Closing
