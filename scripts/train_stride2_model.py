@@ -132,10 +132,6 @@ def train_model(model_builder:ModelBuilder,
                                  mom_range=(0.85, 0.95),
                                  interp='cosine')]
     if epoch_save: callback_partials.append(EpochSaver)
-    metric_partials = [partial(ImprovRMSE, n_bins=20, partial_fit_func=LinFunc,   bootstrap_n=None, restricted_energy=True,  main_metric=False),
-                       partial(MaxRMSE,    n_bins=20, partial_fit_func=LinFunc,   bootstrap_n=None, restricted_energy=True,  main_metric=False),
-                       partial(ImprovRMSE, n_bins=20, partial_fit_func=PowerFunc, bootstrap_n=None, restricted_energy=False, main_metric=False),
-                       partial(MaxRMSE,    n_bins=20, partial_fit_func=PowerFunc, bootstrap_n=None, restricted_energy=False, main_metric=False)]
     print(f'Training {n_models} model(s) for upto {n_epochs} epochs at a batch size of {bs}. \
             StepCycle warm up for {cycle_warmup_len} epochs and decay for {cycle_decay_len}.')
     tmr = timeit.default_timer()
@@ -146,7 +142,7 @@ def train_model(model_builder:ModelBuilder,
                                        cb_partials=callback_partials,
                                        n_epochs=n_epochs,
                                        patience=10,
-                                       metric_partials=metric_partials,
+                                       metric_partials=None,
                                        savepath=tmp_train_path,
                                        bulk_move=False,
                                        excl_idxs=excl_idxs,
